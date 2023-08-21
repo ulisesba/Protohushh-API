@@ -25,16 +25,49 @@ type Follower struct {
 	URL      string `json:"profile_uri"` // Follower's Instagram profile URL.
 }
 
+type Following struct {
+	Username string `json:"username"`    // Following's username.
+	URL      string `json:"profile_uri"` // Following's Instagram profile URL.
+}
+
+type Like struct {
+	Username string `json:"username"` // Like username.
+}
+
 // IGDataFollowing represents Instagram users that the primary user follows.
 type IGDataFollowing IGTakeOutData
 
 // IGDataFollowers represents Instagram users who follow the primary user.
 type IGDataFollowers IGTakeOutData
 
-// IGDatabase is an interface that provides methods to store Instagram follower and following data.
+// IGDatabase is an interface that provides methods to interact with Instagram data.
 type IGDatabase interface {
-	SaveFollowers(followers IGDataFollowers)  // Store follower details.
+	// SaveFollowers Store follower details.
+	SaveFollowers(followers IGDataFollowers)
+
+	// SaveFollowings Store follower details.
 	SaveFollowings(following IGDataFollowing) // Store details of users the primary user is following.
+
+	// FindAllLikes Retrieve all likes.
+	FindAllLikes() []Like
+
+	// FindLikesByUsername Retrieve a "like" from a specific user.
+	FindLikesByUsername(username string) Like
+
+	// FindAllFollowers Retrieve all followers.
+	FindAllFollowers() []Follower
+
+	// FindAllFollowings Retrieve all the people the primary user is following.
+	FindAllFollowings() []Following
+
+	// FindLikesSortedByDate Retrieve 'likes' sorted by date.
+	FindLikesSortedByDate(limit int) []Like
+
+	// FindFollowersByUsername Retrieve followers by username.
+	FindFollowersByUsername(username string) []Follower
+
+	// FindFollowingsByUsername Retrieve people you're following by username.
+	FindFollowingsByUsername(username string) []Following
 }
 
 // IGDataProvider is an interface that provides methods to retrieve Instagram follower and following data.

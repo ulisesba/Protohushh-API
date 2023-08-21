@@ -16,14 +16,14 @@ const CredentialsPath = "./firebase_credentials.json"
 func main() {
 
 	chat := &openai.Chat{}
-	ask := "give me all the likes that  i made to guillermo"
+	ask := "give me my last 5 likes"
 	details, err := chat.Search(ask)
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
 		return
 	}
 
-	fmt.Printf("Intention: %s, Value: %s, Collection: %s\n", details.Intention, details.Value, details.Collection)
+	fmt.Printf("Intention: %s, Value: %s, Collection: %s Limit: %d", details.Intention, details.Value, details.Collection, details.Limit)
 	database, err := firebase.NewIgDatabase(context.Background(), DatabaseUri, CredentialsPath)
 	if err != nil {
 		return

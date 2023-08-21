@@ -1,8 +1,8 @@
 // Package protohush provides structures and interfaces related to chat intentions.
 package protohush
 
-// ChatIntention represents a structure to define user's intention during a chat.
-type ChatIntention struct {
+// ChatQuery represents a structure to define user's intention during a chat.
+type ChatQuery struct {
 	// Intention specifies the main purpose or action the user intends to perform.
 	Intention string
 
@@ -13,8 +13,7 @@ type ChatIntention struct {
 	// Collection indicates the main set or group where the search should be made.
 	Collection string
 
-	// AlternativeCollections provides a list of additional sets or groups where the search can also be made if needed.
-	AlternativeCollections []string
+	Limit int `json:"limit"`
 }
 
 // Chat defines an interface for chat-related operations.

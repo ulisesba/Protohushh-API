@@ -1,0 +1,3 @@
+FIREBASE_CREDENTIALS_PATH: "/path/to/your/serviceAccountKey.json"
+OPENAI_TOKEN: "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"
+BULK_DATA: false
