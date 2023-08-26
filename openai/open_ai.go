@@ -33,7 +33,7 @@ type Chat struct {
 }
 
 // Search method processes the user instruction and interacts with OpenAI and database.
-func (c *Chat) Search(instruction string) (*protohush.ChatQuery, error) {
+func (c Chat) Search(instruction string) (*protohush.ChatResponse, error) {
 	userPrompt := c.generateUserPrompt(instruction)
 	data := c.prepareOpenAIRequestData(userPrompt)
 
@@ -124,18 +124,172 @@ func (c *Chat) parseOpenAIResponse(body []byte) (*Response, error) {
 	return &resp, nil
 }
 
-// handleDatabaseTasks handles database operations based on the intention received from OpenAI.
-func (c *Chat) handleDatabaseTasks(resp *Response) (*protohush.ChatQuery, error) {
+func (c *Chat) handleDatabaseTasks(resp *Response) (*protohush.ChatResponse, error) {
 	var details protohush.ChatQuery
 	err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &details)
 	if err != nil {
 		return nil, err
 	}
 
-	// Handle database tasks based on the user's intention.
+	var chatResp protohush.ChatResponse
+	chatResp.Intention = details.Intention
+
 	switch details.Intention {
-	// ... (as per your switch cases)
+	case "FindAllLikes":
+		likes, err := c.IGDatabase.FindAllLikes()
+		if err != nil {
+			chatResp.Data = ""
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply + " Error retrieving all likes: " + err.Error()
+		} else {
+			chatResp.Data = fmt.Sprintf("%v", likes)
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply
+		}
+
+	case "FindLikesByUsername":
+		likes, err := c.IGDatabase.FindLikesByUsername(details.Value)
+		if err != nil {
+			chatResp.Data = ""
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply + " Error retrieving likes by username: " + err.Error()
+		} else {
+			chatResp.Data = fmt.Sprintf("%v", likes)
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply
+		}
+
+	case "FindLikesSortedByDate":
+		likes, err := c.IGDatabase.FindLikesSortedByDate(details.Limit)
+		if err != nil {
+			chatResp.Data = ""
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply + " Error retrieving likes sorted by date: " + err.Error()
+		} else {
+			chatResp.Data = fmt.Sprintf("%v", likes)
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply
+		}
+
+	case "FindAllFollowers":
+		followers, err := c.IGDatabase.FindAllFollowers()
+		if err != nil {
+			chatResp.Data = ""
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply + " Error retrieving all followers: " + err.Error()
+		} else {
+			chatResp.Data = fmt.Sprintf("%v", followers)
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply
+		}
+
+	case "FindFollowersByUsername":
+		followers, err := c.IGDatabase.FindFollowersByUsername(details.Value)
+		if err != nil {
+			chatResp.Data = ""
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply + " Error retrieving followers by username: " + err.Error()
+		} else {
+			log.Println(followers)
+			chatResp.Data = fmt.Sprintf("%v", followers)
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply
+		}
+
+	case "FindAllFollowings":
+		followings, err := c.IGDatabase.FindAllFollowings()
+		if err != nil {
+			chatResp.Data = ""
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply + " Error retrieving all followings: " + err.Error()
+		} else {
+			chatResp.Data = fmt.Sprintf("%v", followings)
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply
+		}
+
+	case "FindFollowingsByUsername":
+		followings, err := c.IGDatabase.FindFollowingsByUsername(details.Value)
+		if err != nil {
+			chatResp.Data = ""
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply + " Error retrieving followings by username: " + err.Error()
+		} else {
+			chatResp.Data = fmt.Sprintf("%v", followings)
+			composedReply, _ := c.composeReply(&chatResp)
+			chatResp.Data = composedReply
+		}
+
+	default:
+		chatResp.Data = ""
+		composedReply, _ := c.composeReply(&chatResp)
+		chatResp.Data = composedReply + " Unknown intention."
 	}
 
-	return &details, nil
+	return &chatResp, nil
+}
+
+func (c *Chat) composeReply(chatResp *protohush.ChatResponse) (string, error) {
+	userPrompt := fmt.Sprintf("As a customer support bot, I've been tasked with answering a user's question based on the intention '%s' and the provided data '%s'. What's the most concise and user-friendly way to respond?", chatResp.Intention, chatResp.Data)
+
+	switch chatResp.Intention {
+	case "FindAllLikes":
+		userPrompt = fmt.Sprintf("How many likes have been recorded in the data: '%s'?", chatResp.Data)
+
+	case "FindLikesByUsername":
+		userPrompt = fmt.Sprintf("Is there a 'like' from the username specified in the data: '%s'?", chatResp.Data)
+
+	case "FindAllFollowers":
+		userPrompt = fmt.Sprintf("Who are the followers listed in the provided data: '%s'?", chatResp.Data)
+
+	case "FindAllFollowings":
+		userPrompt = fmt.Sprintf("Who is the primary user following according to the data: '%s'?", chatResp.Data)
+
+	case "FindLikesSortedByDate":
+		userPrompt = fmt.Sprintf("What are the 'likes' sorted by date in the data: '%s'?", chatResp.Data)
+
+	case "FindFollowersByUsername":
+		userPrompt = fmt.Sprintf("Does exists the username on the data?: '%s'?", chatResp.Data)
+
+	case "FindFollowingsByUsername":
+		userPrompt = fmt.Sprintf("Is the username specified following anyone in the data: '%s'?", chatResp.Data)
+
+	default:
+		userPrompt = fmt.Sprintf("Based on the intention '%s' and the data '%s', what would be the most appropriate response?", chatResp.Intention, chatResp.Data)
+	}
+	// System instruction specifically designed for the compose reply task.
+	const systemInstructionCompose = "Compose a user-friendly response based on the provided intention and data. The response should be clear, concise, and informative, adhering to best practices for user engagement."
+	// Define the message structure for the OpenAI API request.
+	type Message struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+	const model = "gpt-3.5-turbo"
+
+	// Separately prepare OpenAI request data for composeReply
+	messages := []Message{
+		{Role: "system", Content: systemInstructionCompose},
+		{Role: "user", Content: userPrompt},
+	}
+	data := map[string]interface{}{
+		"model":    model, // assuming model is defined elsewhere or passed in
+		"messages": messages,
+	}
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		log.Fatalf("Error preparing request data: %v", err)
+	}
+
+	body, err := c.sendRequestToOpenAI(jsonData)
+	if err != nil {
+		return "", err
+	}
+
+	openaiResp, err := c.parseOpenAIResponse(body)
+	if err != nil {
+		return "", err
+	}
+
+	// We're making the assumption here that OpenAI will always return at least one choice in the response.
+	return openaiResp.Choices[0].Message.Content, nil
 }

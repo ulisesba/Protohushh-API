@@ -16,8 +16,13 @@ type ChatQuery struct {
 	Limit int `json:"limit"`
 }
 
+type ChatResponse struct {
+	Intention string `json:"intention"`
+	Data      string `json:"data"`
+}
+
 // Chat defines an interface for chat-related operations.
 type Chat interface {
 	// Search is a method that takes a value as an argument and performs a search operation based on it.
-	Search(value string)
+	Search(instruction string) (*ChatResponse, error)
 }

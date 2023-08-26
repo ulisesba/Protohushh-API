@@ -5,6 +5,7 @@ import (
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/db"
 	"google.golang.org/api/option"
+	"log"
 	"protohush"
 )
 
@@ -43,9 +44,9 @@ func NewIgDatabase(ctx context.Context, dbURL, credPath string) (*Database, erro
 
 }
 
-// SaveFollowers saves a slice of IGDataFollowers to Firebase Realtime Database under the "followers" node.
-// Each IGDataFollowers entry is pushed with a unique key.
-func (d *Database) SaveFollowers(data []protohush.IGDataFollowers) error {
+// SaveFollowers saves a slice of IGTakeOutFollowers to Firebase Realtime Database under the "followers" node.
+// Each IGTakeOutFollowers entry is pushed with a unique key.
+func (d *Database) SaveFollowers(data []protohush.IGTakeOutFollowers) error {
 	ref := d.Client.NewRef("followers") // Reference to the "followers" node in the Firebase Realtime Database.
 	followers := make([]protohush.Follower, 0)
 
@@ -68,9 +69,9 @@ func (d *Database) SaveFollowers(data []protohush.IGDataFollowers) error {
 	return nil // Return nil if all takeout was pushed successfully.
 }
 
-// SaveFollowings saves a slice of IGDataFollowing to Firebase Realtime Database under the "followings" node.
-// Each IGDataFollowing entry is pushed with a unique key.
-func (d *Database) SaveFollowings(data []protohush.IGDataFollowing) error {
+// SaveFollowings saves a slice of IGTakeOutFollowing to Firebase Realtime Database under the "followings" node.
+// Each IGTakeOutFollowing entry is pushed with a unique key.
+func (d *Database) SaveFollowings(data []protohush.IGTakeOutFollowing) error {
 	ref := d.Client.NewRef("followings") // Reference to the "followings" node in the Firebase Realtime Database.
 	for _, igData := range data {
 		_, err := ref.Push(d.Ctx, &igData)
@@ -79,4 +80,92 @@ func (d *Database) SaveFollowings(data []protohush.IGDataFollowing) error {
 		}
 	}
 	return nil // Return nil if all takeout was pushed successfully.
+}
+
+func (d *Database) FindAllLikes() ([]protohush.Like, error) {
+	ref := d.Client.NewRef("likes")
+	var likes []protohush.Like
+
+	if err := ref.Get(d.Ctx, &likes); err != nil {
+		return nil, err
+	}
+	return likes, nil
+}
+
+func (d *Database) FindLikesByUsername(username string) (*protohush.Like, error) {
+	ref := d.Client.NewRef("likes").OrderByChild("username").EqualTo(username)
+	var like protohush.Like
+
+	if err := ref.Get(d.Ctx, &like); err != nil {
+		return nil, err
+	}
+	return &like, nil
+}
+
+func (d *Database) FindAllFollowers() ([]protohush.Follower, error) {
+	ref := d.Client.NewRef("followers")
+
+	// Change the type to map
+	followerData := make(map[string]protohush.Follower)
+	if err := ref.Get(d.Ctx, &followerData); err != nil {
+		log.Println("Error fetching followers:", err)
+		return nil, err
+	}
+
+	// Convert the map to a slice
+	var followers []protohush.Follower
+	for _, f := range followerData {
+		followers = append(followers, f)
+	}
+
+	return followers, nil
+}
+
+func (d *Database) FindAllFollowings() ([]protohush.Following, error) {
+	ref := d.Client.NewRef("followings")
+	var followings []protohush.Following
+
+	if err := ref.Get(d.Ctx, &followings); err != nil {
+		return nil, err
+	}
+	return followings, nil
+}
+
+func (d *Database) FindLikesSortedByDate(limit int) ([]protohush.Like, error) {
+	ref := d.Client.NewRef("likes").OrderByChild("date").LimitToFirst(limit)
+	var likes []protohush.Like
+
+	if err := ref.Get(d.Ctx, &likes); err != nil {
+		return nil, err
+	}
+	return likes, nil
+}
+
+func (d *Database) FindFollowersByUsername(username string) ([]protohush.Follower, error) {
+	ref := d.Client.NewRef("followers")
+	q := ref.OrderByChild("username").EqualTo(username)
+
+	followerData := make(map[string]protohush.Follower)
+	if err := q.Get(d.Ctx, &followerData); err != nil {
+
+		log.Println(err)
+		return nil, err
+	}
+
+	var followers []protohush.Follower
+	for _, f := range followerData {
+		followers = append(followers, f)
+	}
+
+	return followers, nil
+}
+
+func (d *Database) FindFollowingsByUsername(username string) ([]protohush.Following, error) {
+	ref := d.Client.NewRef("followings").OrderByChild("username").EqualTo(username)
+	var followings []protohush.Following
+
+	if err := ref.Get(d.Ctx, &followings); err != nil {
+		return nil, err
+	}
+	return followings, nil
 }

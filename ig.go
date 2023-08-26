@@ -12,12 +12,22 @@ type IGTakeOutFollower struct {
 	Timestamp int64  `json:"timestamp"` // Timestamp when the follower was added.
 }
 
+type IGTestLikes struct {
+	Htest string
+}
+
 // IGTakeOutData contains structured information from an Instagram takeout.
 type IGTakeOutData struct {
 	Title          string              `json:"title"`            // Title of the takeout block, if provided.
 	MediaListData  []string            `json:"media_list_data"`  // List of media associated with the user (e.g., photos, videos).
 	StringListData []IGTakeOutFollower `json:"string_list_data"` // List of follower details.
 }
+
+// IGTakeOutFollowing represents Instagram users that the primary user follows.
+type IGTakeOutFollowing IGTakeOutData
+
+// IGTakeOutFollowers represents Instagram users who follow the primary user.
+type IGTakeOutFollowers IGTakeOutData
 
 // Follower represents detailed information about an Instagram follower.
 type Follower struct {
@@ -34,57 +44,50 @@ type Like struct {
 	Username string `json:"username"` // Like username.
 }
 
-// IGDataFollowing represents Instagram users that the primary user follows.
-type IGDataFollowing IGTakeOutData
-
-// IGDataFollowers represents Instagram users who follow the primary user.
-type IGDataFollowers IGTakeOutData
-
-// IGDatabase is an interface that provides methods to interact with Instagram data.
 type IGDatabase interface {
 	// SaveFollowers Store follower details.
-	SaveFollowers(followers IGDataFollowers)
+	SaveFollowers(followers []IGTakeOutFollowers) error
 
 	// SaveFollowings Store follower details.
-	SaveFollowings(following IGDataFollowing) // Store details of users the primary user is following.
+	SaveFollowings(following []IGTakeOutFollowing) error
 
 	// FindAllLikes Retrieve all likes.
-	FindAllLikes() []Like
+	FindAllLikes() ([]Like, error)
 
 	// FindLikesByUsername Retrieve a "like" from a specific user.
-	FindLikesByUsername(username string) Like
+	FindLikesByUsername(username string) (*Like, error)
 
 	// FindAllFollowers Retrieve all followers.
-	FindAllFollowers() []Follower
+	FindAllFollowers() ([]Follower, error)
 
 	// FindAllFollowings Retrieve all the people the primary user is following.
-	FindAllFollowings() []Following
+	FindAllFollowings() ([]Following, error)
 
 	// FindLikesSortedByDate Retrieve 'likes' sorted by date.
-	FindLikesSortedByDate(limit int) []Like
+	FindLikesSortedByDate(limit int) ([]Like, error)
 
 	// FindFollowersByUsername Retrieve followers by username.
-	FindFollowersByUsername(username string) []Follower
+	FindFollowersByUsername(username string) ([]Follower, error)
 
 	// FindFollowingsByUsername Retrieve people you're following by username.
-	FindFollowingsByUsername(username string) []Following
+	FindFollowingsByUsername(username string) ([]Following, error)
 }
 
-// IGDataProvider is an interface that provides methods to retrieve Instagram follower and following data.
-type IGDataProvider interface {
-	Followers() []IGDataFollowers  // Retrieve follower details.
-	Followings() []IGDataFollowing // Retrieve details of users the primary user is following.
+// IGTakeOutProvider is an interface that provides methods to retrieve Instagram follower and following data.
+type IGTakeOutProvider interface {
+	Followers() []IGTakeOutFollowers  // Retrieve follower details.
+	Followings() []IGTakeOutFollowing // Retrieve details of users the primary user is following.
 }
 
-// ReadFollowersFromFile reads a file containing Instagram follower details and returns a slice of IGDataFollowers.
-func ReadFollowersFromFile(filename string) ([]IGDataFollowers, error) {
+// ReadFollowersFromFile reads a file containing Instagram follower details and returns a slice of IGTakeOutFollowers.
+func ReadFollowersFromFile(filename string) ([]IGTakeOutFollowers, error) {
 	// Read file content.
 	fileBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	var data []IGDataFollowers
+	var data []IGTakeOutFollowers
 	err = json.Unmarshal(fileBytes, &data)
 	if err != nil {
 		return nil, err
@@ -94,8 +97,8 @@ func ReadFollowersFromFile(filename string) ([]IGDataFollowers, error) {
 }
 
 // ReadFollowingsFromFile reads a file containing details of users the primary user follows
-// and returns a slice of IGDataFollowing.
-func ReadFollowingsFromFile(filename string) ([]IGDataFollowing, error) {
+// and returns a slice of IGTakeOutFollowing.
+func ReadFollowingsFromFile(filename string) ([]IGTakeOutFollowing, error) {
 	// Read file content.
 	fileBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -104,7 +107,7 @@ func ReadFollowingsFromFile(filename string) ([]IGDataFollowing, error) {
 
 	// Define a wrapper for the following.json format.
 	type DataWrapper struct {
-		RelationshipsFollowing []IGDataFollowing `json:"relationships_following"`
+		RelationshipsFollowing []IGTakeOutFollowing `json:"relationships_following"`
 	}
 
 	var wrappedData DataWrapper
