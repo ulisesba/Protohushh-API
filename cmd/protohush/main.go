@@ -29,6 +29,7 @@ func main() {
 
 	log.Println(len(followers), err)
 
+	database.DropDatabase()
 	database.SaveFollowers(followers)
 
 	api.NewApi(chat).Run()

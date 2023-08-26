@@ -2,11 +2,12 @@ package firebase
 
 import (
 	"context"
+	"log"
+	"protohush"
+
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/db"
 	"google.golang.org/api/option"
-	"log"
-	"protohush"
 )
 
 // Database wraps the Firebase client and context, offering methods to interact with the Firebase Realtime Database.
@@ -42,6 +43,19 @@ func NewIgDatabase(ctx context.Context, dbURL, credPath string) (*Database, erro
 		Ctx:    ctx,
 	}, nil
 
+}
+
+// DropDatabase delete all existing nodes
+func (d *Database) DropDatabase() error {
+	// Reference to the root node in the Firebase Realtime Database (want to delete all)
+	ref := d.Client.NewRef("/")
+
+	// Set the value at the root node to nil, effectively deleting all children nodes.
+	if err := ref.Set(d.Ctx, nil); err != nil {
+		return err // Return an error if the drop fails
+	}
+	// Return nil if the operation was successful.
+	return nil
 }
 
 // SaveFollowers saves a slice of IGTakeOutFollowers to Firebase Realtime Database under the "followers" node.
