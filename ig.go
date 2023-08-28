@@ -47,6 +47,7 @@ type Like struct {
 type IGDatabase interface {
 	// DropDatabase Store follower details.
 	DropDatabase() error
+
 	// SaveFollowers Store follower details.
 	SaveFollowers(followers []IGTakeOutFollowers) error
 
