@@ -96,17 +96,53 @@ func (d *Database) SaveFollowings(data []protohush.IGTakeOutFollowing) error {
 	return nil // Return nil if all takeout was pushed successfully.
 }
 
+func (d *Database) SaveLikes(data []protohush.IGTakeOutLikes) error {
+	// Reference to the "likes" node in the Firebase Realtime Database.
+	ref := d.Client.NewRef("likes")
+	likes := make([]protohush.Like, 0)
+
+	for _, igData := range data {
+		for _, v := range igData.StringListData {
+			likes = append(likes, protohush.Like{
+				Username: igData.Title,
+				Href:     v.Href,
+			})
+		}
+	}
+
+	for _, l := range likes {
+		_, err := ref.Push(d.Ctx, &l)
+		if err != nil {
+			// Return an error if pushing to Firebase fails.
+			return err
+		}
+	}
+	// Return nil if all takeout was pushed successfully.
+	return nil
+}
+
 func (d *Database) FindAllLikes() ([]protohush.Like, error) {
 	ref := d.Client.NewRef("likes")
-	var likes []protohush.Like
 
-	if err := ref.Get(d.Ctx, &likes); err != nil {
+	// Change the type to map
+	likeData := make(map[string]protohush.Like)
+	if err := ref.Get(d.Ctx, &likeData); err != nil {
+		log.Println("Error fetching likes:", err)
 		return nil, err
 	}
+
+	// Changethe map back into a slice
+	var likes []protohush.Like
+	for _, l := range likeData {
+		likes = append(likes, l)
+	}
+	log.Println("dataaaaaa", likes)
 	return likes, nil
 }
 
 func (d *Database) FindLikesByUsername(username string) (*protohush.Like, error) {
+	log.Println("El username es: ", username)
+
 	ref := d.Client.NewRef("likes").OrderByChild("username").EqualTo(username)
 	var like protohush.Like
 

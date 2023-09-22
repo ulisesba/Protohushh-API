@@ -3,31 +3,45 @@ package protohush
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 )
 
-// IGTakeOutFollower represents an Instagram follower's details extracted from a takeout.
-type IGTakeOutFollower struct {
+// IGTakeOutFollowerDetail represents an Instagram follower's details extracted from a takeout.
+type IGTakeOutFollowerDetail struct {
 	Href      string `json:"href"`      // URL to the follower's Instagram profile.
-	Value     string `json:"value"`     // IGTakeOutFollower's Instagram username.
+	Value     string `json:"value"`     // IGTakeOutFollowerDetail's Instagram username.
 	Timestamp int64  `json:"timestamp"` // Timestamp when the follower was added.
+}
+
+type IGTakeOutLikeDetail struct {
+	Href      string `json:"href"`
+	Value     string `json:"value"`
+	Timestamp int64  `json:"timestamp"`
 }
 
 type IGTestLikes struct {
 	Htest string
 }
 
-// IGTakeOutData contains structured information from an Instagram takeout.
-type IGTakeOutData struct {
-	Title          string              `json:"title"`            // Title of the takeout block, if provided.
-	MediaListData  []string            `json:"media_list_data"`  // List of media associated with the user (e.g., photos, videos).
-	StringListData []IGTakeOutFollower `json:"string_list_data"` // List of follower details.
+// IGTakeOutFollower contains structured information from an Instagram takeout.
+type IGTakeOutFollower struct {
+	Title          string                    `json:"title"`            // Title of the takeout block, if provided.
+	MediaListData  []string                  `json:"media_list_data"`  // List of media associated with the user (e.g., photos, videos).
+	StringListData []IGTakeOutFollowerDetail `json:"string_list_data"` // List of follower details.
+}
+
+type IGTakeOutLike struct {
+	Title          string                `json:"title"`
+	StringListData []IGTakeOutLikeDetail `json:"string_list_data"`
 }
 
 // IGTakeOutFollowing represents Instagram users that the primary user follows.
-type IGTakeOutFollowing IGTakeOutData
+type IGTakeOutFollowing IGTakeOutFollower
 
 // IGTakeOutFollowers represents Instagram users who follow the primary user.
-type IGTakeOutFollowers IGTakeOutData
+type IGTakeOutFollowers IGTakeOutFollower
+
+type IGTakeOutLikes IGTakeOutLike
 
 // Follower represents detailed information about an Instagram follower.
 type Follower struct {
@@ -42,6 +56,7 @@ type Following struct {
 
 type Like struct {
 	Username string `json:"username"` // Like username.
+	Href     string `json:"href"`     // Like href
 }
 
 type IGDatabase interface {
@@ -53,6 +68,8 @@ type IGDatabase interface {
 
 	// SaveFollowings Store follower details.
 	SaveFollowings(following []IGTakeOutFollowing) error
+
+	SaveLikes(likes []IGTakeOutLikes) error
 
 	// FindAllLikes Retrieve all likes.
 	FindAllLikes() ([]Like, error)
@@ -120,4 +137,26 @@ func ReadFollowingsFromFile(filename string) ([]IGTakeOutFollowing, error) {
 	}
 
 	return wrappedData.RelationshipsFollowing, nil
+}
+
+func ReadLikesFromFile(filename string) ([]IGTakeOutLikes, error) {
+	// Read file content.
+	fileBytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	type LikesDataWrapper struct {
+		Likes []IGTakeOutLikes `json:"likes_media_likes"`
+	}
+
+	var likesDataWrapper LikesDataWrapper
+	err = json.Unmarshal(fileBytes, &likesDataWrapper)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println(likesDataWrapper.Likes)
+
+	return likesDataWrapper.Likes, nil
 }

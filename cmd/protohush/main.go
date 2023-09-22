@@ -26,11 +26,14 @@ func main() {
 	}
 
 	followers, err := protohush.ReadFollowersFromFile("./takeout/ig/followers.json")
+	likes, err := protohush.ReadLikesFromFile("./takeout/ig/likes.json")
 
 	log.Println(len(followers), err)
+	log.Println(len(likes), err)
 
-	database.DropDatabase()
-	database.SaveFollowers(followers)
+	//	database.DropDatabase()
+	//	database.SaveFollowers(followers)
+	//	database.SaveLikes(likes)
 
 	api.NewApi(chat).Run()
 

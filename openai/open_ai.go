@@ -66,7 +66,7 @@ func (c *Chat) prepareOpenAIRequestData(userPrompt string) []byte {
 
 	const model = "gpt-3.5-turbo"
 	// System instruction for OpenAI to process the user prompt correctly.
-	const systemInstruction = "Analyze the user instruction to identify the intention and any potential record limit. The intention can be 'FindAllLikes', 'FindLikeByUsername', 'FindAllFollowers', 'FindAllFollowings', 'FindLikesSortedByDate', 'FindFollowersByUsername', or 'FindFollowingsByUsername'. If a specified collection like 'users' is not identified, provide suggestions for other valid collections such as 'followers', 'followings', and 'likes'. Offer guidance on how to access the relevant user data in these alternatives. If a limit is specified, return up to that number of records. Return the response as a JSON object comprising the fields: intention, collection, alternative_collections, value_to_search, and limit."
+	const systemInstruction = "Analyze the user instruction to identify the intention and any potential record limit. The intention can be 'FindAllLikes', 'FindLikesByUsername', 'FindAllFollowers', 'FindAllFollowings', 'FindLikesSortedByDate', 'FindFollowersByUsername', or 'FindFollowingsByUsername'. If a specified collection like 'users' is not identified, provide suggestions for other valid collections such as 'followers', 'followings', and 'likes'. Offer guidance on how to access the relevant user data in these alternatives. If a limit is specified, return up to that number of records. Return the response as a JSON object comprising the fields: intention, collection, alternative_collections, value_to_search, and limit."
 
 	messages := []Message{
 		{Role: "system", Content: systemInstruction},
